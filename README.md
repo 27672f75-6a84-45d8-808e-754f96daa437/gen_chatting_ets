@@ -1,6 +1,9 @@
 # GenChattingEts
 
-**TODO: Add description**
+## TODO_list
+
+1. gen_chatting stash 구현
+    - 예기치 못한 오류로 프로세스가 종료 후 재시작시 ets를 활용하여 연결되어있었던 클라이언트 데이터를 불러와 다시 연결하도록 한다.
 
 ## Installation
 
