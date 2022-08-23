@@ -26,7 +26,6 @@ defmodule GenChattingEts do
   def handle_call({:connect, client_pid, room_name}, _from, state) do
     client_list = GenChattingEts.SimpleCache.get(room_name) |> List.flatten()
     new_state = Enum.uniq(client_pid ++ state ++ client_list)
-    IO.inspect(new_state)
     GenChattingEts.SimpleCache.set(room_name, new_state)
     {:reply, client_pid, new_state}
   end
@@ -39,7 +38,7 @@ defmodule GenChattingEts do
 
   @impl true
   def handle_cast({:raise}, state) do
-    Enum.map(state, fn -> send([], {:message}) end)
+    send(:a, {:message, "Raise"})
     {:noreply, state}
   end
 end
