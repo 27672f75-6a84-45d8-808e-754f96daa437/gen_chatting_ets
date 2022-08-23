@@ -8,8 +8,9 @@ defmodule GenChattingEts.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: GenChattingEts.Worker.start_link(arg)
-      # {GenChattingEts.Worker, arg}
+      GenChattingEts.Cluster,
+      GenChattingEts.SimpleCache,
+      GenChattingEts.DynamicSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
