@@ -3,42 +3,38 @@ defmodule GenChattingEts do
 
   def start_link(init_arg) do
     room_name = init_arg[:room_name]
-    # 서버가 터지고 재시작될 때 이전 정보를 가져옴.
-    client_list = GenChattingEts.SimpleCache.get(room_name) |> List.flatten()
-    GenServer.start_link(__MODULE__, client_list, name: {:global, room_name})
+    GenServer.start_link(__MODULE__, room_name, name: {:global, room_name})
+  end
+
+  def connect(room_name, client_pid) do
+    GenServer.call({:global, room_name}, {:connect, client_pid})
   end
 
   def send({room_name, message}) do
     GenServer.cast({:global, room_name}, {:send, message})
   end
 
-  # 서버를 터트리기 위한 임시 함수
-  def raise({room_name}) do
-    GenServer.cast({:global, room_name}, {:raise})
+  @impl true
+  def init(room_name) do
+    {:ok, room_name}
   end
 
   @impl true
-  def init(init_arg) do
-    {:ok, init_arg}
+  def handle_call({:connect, client_pid}, _from, room_name) do
+    GenChattingEts.SimpleCache.add(room_name, client_pid)
+    {:reply, self(), room_name}
   end
 
   @impl true
-  def handle_call({:connect, client_pid, room_name}, _from, state) do
-    client_list = GenChattingEts.SimpleCache.get(room_name) |> List.flatten()
-    new_state = Enum.uniq(client_pid ++ state ++ client_list)
-    GenChattingEts.SimpleCache.set(room_name, new_state)
-    {:reply, client_pid, new_state}
+  def handle_cast({:send, message}, room_name) do
+    :a = message
+    client_list = GenChattingEts.SimpleCache.get(room_name)
+    Enum.map(client_list, fn client_pid -> send(client_pid, {:message, message}) end)
+    {:noreply, room_name}
   end
 
   @impl true
-  def handle_cast({:send, message}, state) do
-    Enum.map(state, fn client_pid -> send(client_pid, {:message, message}) end)
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_cast({:raise}, state) do
-    send(:a, {:message, "Raise"})
-    {:noreply, state}
+  def terminate(reason, room_name) do
+    IO.inspect({reason, room_name})
   end
 end

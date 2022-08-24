@@ -7,14 +7,8 @@ defmodule GenChattingEts.DynamicSupervisor do
 
   def connect(room_name) do
     spec = {GenChattingEts, room_name: room_name}
-
-    case DynamicSupervisor.start_child(__MODULE__, spec) do
-      {:ok, worker_pid} ->
-        GenServer.call(worker_pid, {:connect, [self()], room_name})
-
-      {:error, {_worker_state, worker_pid}} ->
-        GenServer.call(worker_pid, {:connect, [self()], room_name})
-    end
+    DynamicSupervisor.start_child(__MODULE__, spec)
+    GenChattingEts.connect(room_name, self())
   end
 
   @impl true

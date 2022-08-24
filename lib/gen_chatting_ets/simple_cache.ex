@@ -6,28 +6,36 @@ defmodule GenChattingEts.SimpleCache do
   end
 
   @impl true
-  def init(init_arg) do
-    :ets.new(:chatting_room, [:set, :public, :named_table])
-    {:ok, init_arg}
+  def init(_init_arg) do
+    table = :ets.new(__MODULE__, [:set, :public])
+    {:ok, table}
   end
 
   def get(room_name) do
     GenServer.call(__MODULE__, {:get, room_name})
   end
 
-  def set(room_name, client_list) do
-    GenServer.cast(__MODULE__, {:set, room_name, client_list})
+  def add(room_name, client) do
+    GenServer.call(__MODULE__, {:add, room_name, client})
   end
 
   @impl true
-  def handle_call({:get, room_name}, _from, state) do
-    client_list = :ets.match(:chatting_room, {room_name, :"$1"})
-    {:reply, client_list, state}
+  def handle_call({:get, room_name}, _from, table) do
+    client_list = get_client_list(table, room_name)
+    {:reply, client_list, table}
   end
 
   @impl true
-  def handle_cast({:set, room_name, client_list}, state) do
-    :ets.insert(:chatting_room, {room_name, client_list})
-    {:noreply, state}
+  def handle_call({:add, room_name, client}, _from, table) do
+    client_list = get_client_list(table, room_name)
+    :ets.insert(table, {room_name, [client | client_list]})
+    {:reply, :ok, table}
+  end
+
+  defp get_client_list(table, room_name) do
+    case :ets.lookup(table, room_name) do
+      [] -> []
+      [{^room_name, client_list}] -> client_list
+    end
   end
 end
